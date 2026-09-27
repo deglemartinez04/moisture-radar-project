@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+
+# Raw radar captures are large binary files -- keep them on a shared drive,
+# not in git. Use Git LFS instead if the team decides to version them here.
+*.h5
+
+# Local smoke-test output, not real project data
+extracted_from_h5.csv
