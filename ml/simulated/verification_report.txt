@@ -1,0 +1,46 @@
+VERIFICATION OF THE ~80% SIMULATED ACCURACY
+===========================================
+Made 2026-10-13. All data here is SIMULATED (ml/make_synthetic.py). It checks that the
+pipeline works; it says nothing about how well the real radar will do.
+
+1. FIVE DIFFERENT SIMULATED DATASETS (30 recordings each, 10 per class)
+   Same simulator, different random seed. Seed 0 is the dataset in this folder.
+
+   seed   window accuracy   recording accuracy      95% range (windows)
+   ----   ---------------   --------------------    -------------------
+   0      79.9%             80.0%  (24 of 30)       66.4% - 93.2%
+   1      72.3%             73.3%  (22 of 30)       57.2% - 87.1%
+   2      88.6%             90.0%  (27 of 30)       76.5% - 98.7%
+   3      76.7%             76.7%  (23 of 30)       60.0% - 90.0%
+   4      93.3%             93.3%  (28 of 30)       83.3% - 100.0%
+
+   Recording accuracy: average about 83%, range 73% - 93%.
+   Chance level for 3 classes: 33.3%.
+
+2. LABEL-SHUFFLE CONTROL (checks the test is not leaking answers)
+   Same measurements as seed 0, but each recording's label (Dry/Damp/Saturated) was
+   randomly reassigned. If the pipeline were cheating, accuracy would stay high.
+
+   window accuracy:     26.8%  (95% range 13.0% - 43.6%)
+   recording accuracy:  26.7%  (8 of 30)
+   -> at chance level (33.3%), as it should be.
+
+3. WHERE THE 6 MISSES IN THE SEED-0 DATASET SIT (pin-meter % MC; cutoffs 12% and 20%)
+
+   recording               true class   pin meter   predicted   distance to nearest cutoff
+   SIMWood_Damp_4.h5       Damp         13.6%       Dry         1.6 points
+   SIMWood_Damp_5.h5       Damp         14.0%       Dry         2.0 points
+   SIMWood_Damp_9.h5       Damp         12.1%       Dry         0.1 points
+   SIMWood_Dry_2.h5        Dry          11.3%       Damp        0.7 points
+   SIMWood_Dry_6.h5        Dry          11.2%       Damp        0.8 points
+   SIMWood_Saturated_9.h5  Saturated    22.0%       Damp        2.0 points
+
+   Every miss is within 2 points of a cutoff.
+
+HOW TO RE-RUN THE TRAINING ON THIS DATASET (should print 79.9% / 80.0%)
+   Needs Python with scikit-learn. Run from the project folder that contains ml/:
+   python ml/train_model.py "<this folder>\dataset.csv" --out-dir "%TEMP%\check_model"
+
+WHAT THIS DOES NOT PROVE
+   The recordings come from a simple wet-wood physics model, not from the real sensor.
+   Only real, labeled recordings can show whether the radar separates Dry, Damp and Saturated.

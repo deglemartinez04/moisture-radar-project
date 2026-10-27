@@ -1,0 +1,39 @@
+
+1800 windows from 30 recordings, 5-fold cross-validation grouped by recording
+Window accuracy:    79.9%  (95% bootstrap interval 66.4% - 93.2%)
+Recording accuracy: 80.0%  (24/30 majority votes correct)
+Chance level:       33.3%
+
+Confusion matrix (rows = true, columns = predicted, windows):
+           Damp  Dry  Saturated
+Damp        420  180          0
+Dry         122  478          0
+Saturated    60    0        540
+
+Recordings misclassified by majority vote:
+                            truth  vote
+recording_id                           
+SIMWood_Damp_4.h5            Damp   Dry
+SIMWood_Damp_5.h5            Damp   Dry
+SIMWood_Damp_9.h5            Damp   Dry
+SIMWood_Dry_2.h5              Dry  Damp
+SIMWood_Dry_6.h5              Dry  Damp
+SIMWood_Saturated_9.h5  Saturated  Damp
+
+Feature importances (final model):
+g2_g1_amplitude_ratio         0.280
+g2_amplitude_mean             0.203
+attenuation_slope             0.141
+g1_amplitude_mean             0.115
+g2_g1_phase_diff_rad          0.102
+total_energy                  0.073
+gate_separation_m             0.047
+noise_floor                   0.022
+g2_amplitude_std              0.005
+frame_to_frame_variability    0.005
+signal_quality_score          0.003
+g1_amplitude_std              0.003
+g1_phase_std_rad              0.001
+g2_phase_std_rad              0.000
+
+Saved C:\Users\marti\OneDrive\Documents\MoistureRadarProject\simulation_new_cutoffs\model\moisture_model.joblib and model_meta.json

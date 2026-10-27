@@ -15,19 +15,58 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFormLayout,
+    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QSpinBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
-from sensor_manager import IDLE_STATE_OPTIONS, PRF_OPTIONS, SensorManager
+from sensor_manager import (
+    IDLE_STATE_OPTIONS,
+    PRF_OPTIONS,
+    START_POINT_MIN,
+    STEP_LENGTH_OPTIONS,
+    SensorManager,
+    snap_step_length,
+)
+
+# Bump when the project defaults change in a way old saved settings must not override.
+SETTINGS_VERSION = 3
+
+
+class StepLengthSpinBox(QSpinBox):
+    """Spin box restricted to the A121's valid step lengths (1, 2, 3, 4, 6, 8, 12, 24).
+
+    The +/- buttons and arrow keys jump to the next valid value (4 -> 6 -> 8 -> 12 ...);
+    a typed value is snapped to the nearest valid one.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setRange(STEP_LENGTH_OPTIONS[0], STEP_LENGTH_OPTIONS[-1])
+
+    def stepBy(self, steps):
+        options = STEP_LENGTH_OPTIONS
+        idx = options.index(snap_step_length(self.value()))
+        idx = max(0, min(len(options) - 1, idx + int(steps)))
+        self.setValue(options[idx])
+
+    def valueFromText(self, text):
+        try:
+            return snap_step_length(int(text.strip()))
+        except ValueError:
+            return self.value()
+
+    def setValue(self, value):
+        super().setValue(snap_step_length(value))
 
 
 def _section(title: str) -> QGroupBox:
@@ -73,39 +112,51 @@ class SettingsTab(QWidget):
         super().__init__()
         self.mgr = sensor_manager
         self.settings = QSettings("RadarMoistureTomography", "A121Console")
+        self.defaults_upgraded = False
         self._load_saved_settings()
         self._build_ui()
         self._load_from_params()
+        if self.defaults_upgraded:
+            self._save_settings()
+            self.save_status_label.setText("Updated to the new project defaults.")
 
     # ------------------------------------------------------------------
     # UI construction
     # ------------------------------------------------------------------
     def _build_ui(self):
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(24, 20, 24, 20)
-        outer.setSpacing(16)
+        outer.setContentsMargins(8, 6, 8, 6)
+        outer.setSpacing(6)
 
-        # --- Connection row (always visible, not in the scroll area) ---
-        conn_box = _section("Connection")
-        conn_layout = QHBoxLayout(conn_box)
-        conn_layout.setSpacing(10)
-
-        conn_layout.addWidget(QLabel("Sensor IP address"))
+        # --- One compact top row (always visible): connection + apply/reset ---
+        top = QHBoxLayout()
+        top.setSpacing(8)
+        top.addWidget(QLabel("Sensor IP"))
         self.ip_edit = QLineEdit()
-        self.ip_edit.setPlaceholderText("e.g. 172.20.10.4 or 127.0.0.1")
-        self.ip_edit.setFixedWidth(180)
-        conn_layout.addWidget(self.ip_edit)
+        self.ip_edit.setPlaceholderText("e.g. 172.20.10.4")
+        self.ip_edit.setFixedWidth(130)
+        top.addWidget(self.ip_edit)
 
         self.connect_btn = QPushButton("Connect")
         self.connect_btn.setObjectName("primaryButton")
-        conn_layout.addWidget(self.connect_btn)
+        top.addWidget(self.connect_btn)
 
         self.status_label = QLabel("Not connected")
         self.status_label.setObjectName("statusLabel")
-        conn_layout.addWidget(self.status_label)
-        conn_layout.addStretch(1)
+        # Long connection messages are clipped, never allowed to widen the window.
+        self.status_label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self.status_label.setMinimumWidth(0)
+        top.addWidget(self.status_label, 1)
 
-        outer.addWidget(conn_box)
+        self.apply_btn = QPushButton("Apply settings")
+        self.apply_btn.setObjectName("primaryButton")
+        top.addWidget(self.apply_btn)
+        self.reset_btn = QPushButton("Reset defaults")
+        top.addWidget(self.reset_btn)
+        self.save_status_label = QLabel("")
+        self.save_status_label.setObjectName("summaryLabel")
+        top.addWidget(self.save_status_label)
+        outer.addLayout(top)
 
         # --- Scrollable area for all sensor parameters ---
         scroll = QScrollArea()
@@ -113,35 +164,30 @@ class SettingsTab(QWidget):
         scroll.setFrameShape(QScrollArea.NoFrame)
         content = QWidget()
         content_layout = QVBoxLayout(content)
-        content_layout.setSpacing(16)
+        content_layout.setSpacing(8)
         content_layout.setContentsMargins(0, 0, 4, 0)
 
-        content_layout.addWidget(self._build_range_section())
-        content_layout.addWidget(self._build_timing_section())
-        content_layout.addWidget(self._build_rf_section())
+        # Two columns of sections so more parameters are visible side by side.
+        columns = QHBoxLayout()
+        columns.setSpacing(8)
+        left = QVBoxLayout()
+        left.setSpacing(8)
+        right = QVBoxLayout()
+        right.setSpacing(8)
+        left.addWidget(self._build_range_section())
+        left.addWidget(self._build_rf_section())
+        left.addStretch(1)
+        right.addWidget(self._build_timing_section())
+        right.addStretch(1)
+        columns.addLayout(left, 1)
+        columns.addLayout(right, 1)
+        content_layout.addLayout(columns)
         content_layout.addWidget(self._build_advanced_section())
         content_layout.addWidget(self._build_explanations_section())
         content_layout.addStretch(1)
 
         scroll.setWidget(content)
         outer.addWidget(scroll, 1)
-
-        # --- Bottom row: apply/save + reset ---
-        bottom = QHBoxLayout()
-        bottom.setSpacing(10)
-
-        self.apply_btn = QPushButton("Apply settings")
-        self.apply_btn.setObjectName("primaryButton")
-        bottom.addWidget(self.apply_btn)
-
-        self.reset_btn = QPushButton("Reset to project defaults")
-        bottom.addWidget(self.reset_btn)
-
-        self.save_status_label = QLabel("")
-        self.save_status_label.setObjectName("summaryLabel")
-        bottom.addWidget(self.save_status_label)
-        bottom.addStretch(1)
-        outer.addLayout(bottom)
 
         # Wire up signals
         self.connect_btn.clicked.connect(self._on_connect_clicked)
@@ -150,24 +196,27 @@ class SettingsTab(QWidget):
         self.mgr.connection_changed.connect(self._on_connection_changed)
 
     def _build_range_section(self) -> QGroupBox:
-        box = _section("Range — start point, points, step length")
+        box = _section("Range  (1 unit ≈ 2.5 mm)")
         form = QFormLayout(box)
         form.setLabelAlignment(Qt.AlignLeft)
+        form.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
+        form.setHorizontalSpacing(10)
+        form.setVerticalSpacing(5)
 
         self.start_point_spin = QSpinBox()
-        self.start_point_spin.setRange(0, 4000)
+        self.start_point_spin.setRange(START_POINT_MIN, 4000)
         self.start_point_spin.valueChanged.connect(self._on_any_change)
-        form.addRow("Start point (≈ 2.5 mm/unit)", self.start_point_spin)
+        form.addRow("Start point", self.start_point_spin)
 
         self.num_points_spin = QSpinBox()
         self.num_points_spin.setRange(1, 4000)
         self.num_points_spin.valueChanged.connect(self._on_any_change)
         form.addRow("Number of points", self.num_points_spin)
 
-        self.step_length_spin = QSpinBox()
-        self.step_length_spin.setRange(1, 100)
+        self.step_length_spin = StepLengthSpinBox()
+        self.step_length_spin.setToolTip("Valid A121 values only: 1, 2, 3, 4, 6, 8, 12, 24 (x 2.5 mm).")
         self.step_length_spin.valueChanged.connect(self._on_any_change)
-        form.addRow("Step length (≈ 2.5 mm/unit)", self.step_length_spin)
+        form.addRow("Step length", self.step_length_spin)
 
         self.range_summary_label = QLabel()
         self.range_summary_label.setObjectName("summaryLabel")
@@ -179,6 +228,9 @@ class SettingsTab(QWidget):
         box = _section("Timing — sweeps, frame/sweep rate")
         form = QFormLayout(box)
         form.setLabelAlignment(Qt.AlignLeft)
+        form.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
+        form.setHorizontalSpacing(10)
+        form.setVerticalSpacing(5)
 
         self.sweeps_per_frame_spin = QSpinBox()
         self.sweeps_per_frame_spin.setRange(1, 2047)
@@ -195,15 +247,14 @@ class SettingsTab(QWidget):
         self.frame_rate_spin.setRange(0.1, 1000)
         self.frame_rate_spin.setDecimals(1)
         self.frame_rate_spin.setSuffix(" Hz")
+        self.frame_rate_spin.setToolTip(
+            "Frames per second. For example, 30 Hz means about 30 complete frames each second."
+        )
         self.frame_rate_spin.valueChanged.connect(self._on_any_change)
-
-        frame_rate_widget = QWidget()
-        frame_rate_layout = QHBoxLayout(frame_rate_widget)
-        frame_rate_layout.setContentsMargins(0, 0, 0, 0)
-        frame_rate_layout.setSpacing(8)
-        frame_rate_layout.addWidget(self.frame_rate_mode_combo)
-        frame_rate_layout.addWidget(self.frame_rate_spin, 1)
-        form.addRow("Frame rate", frame_rate_widget)
+        self.frame_rate_spin.valueChanged.connect(self._update_rate_descriptions)
+        self.frame_rate_detail = QLabel()
+        self.frame_rate_detail.setObjectName("featureName")
+        form.addRow("Frame rate", self._rate_widget(self.frame_rate_mode_combo, self.frame_rate_spin, self.frame_rate_detail))
 
         # Sweep rate: explicitly choose between A121 automatic operation
         # (None / maximum available) and a user-selected manual rate.
@@ -215,40 +266,62 @@ class SettingsTab(QWidget):
         self.sweep_rate_spin.setRange(0.1, 100000)
         self.sweep_rate_spin.setDecimals(1)
         self.sweep_rate_spin.setSuffix(" Hz")
+        self.sweep_rate_spin.setToolTip(
+            "Sweeps per second. A sweep is one individual radar measurement, not a complete frame."
+        )
         self.sweep_rate_spin.valueChanged.connect(self._on_any_change)
-
-        sweep_rate_widget = QWidget()
-        sweep_rate_layout = QHBoxLayout(sweep_rate_widget)
-        sweep_rate_layout.setContentsMargins(0, 0, 0, 0)
-        sweep_rate_layout.setSpacing(8)
-        sweep_rate_layout.addWidget(self.sweep_rate_mode_combo)
-        sweep_rate_layout.addWidget(self.sweep_rate_spin, 1)
-        form.addRow("Sweep rate", sweep_rate_widget)
+        self.sweep_rate_spin.valueChanged.connect(self._update_rate_descriptions)
+        self.sweep_rate_detail = QLabel()
+        self.sweep_rate_detail.setObjectName("featureName")
+        form.addRow("Sweep rate", self._rate_widget(self.sweep_rate_mode_combo, self.sweep_rate_spin, self.sweep_rate_detail))
 
         self.continuous_sweep_check = QCheckBox("Continuous sweep mode (CSM)")
         self.continuous_sweep_check.stateChanged.connect(self._on_any_change)
-        form.addRow("", self.continuous_sweep_check)
+        form.addRow(self.continuous_sweep_check)
 
         self.double_buffering_check = QCheckBox("Double buffering")
         self.double_buffering_check.stateChanged.connect(self._on_any_change)
-        form.addRow("", self.double_buffering_check)
+        form.addRow(self.double_buffering_check)
 
         self.inter_frame_idle_combo = QComboBox()
         self.inter_frame_idle_combo.addItems(IDLE_STATE_OPTIONS)
         self.inter_frame_idle_combo.currentTextChanged.connect(self._on_any_change)
-        form.addRow("Inter-frame idle state", self.inter_frame_idle_combo)
+        form.addRow("Inter-frame idle", self.inter_frame_idle_combo)
 
         self.inter_sweep_idle_combo = QComboBox()
         self.inter_sweep_idle_combo.addItems(IDLE_STATE_OPTIONS)
         self.inter_sweep_idle_combo.currentTextChanged.connect(self._on_any_change)
-        form.addRow("Inter-sweep idle state", self.inter_sweep_idle_combo)
+        form.addRow("Inter-sweep idle", self.inter_sweep_idle_combo)
 
         return box
+
+    @staticmethod
+    def _rate_widget(mode_combo, value_spin, detail_label) -> QWidget:
+        """[Automatic|Manual] [value Hz] on one line; the description (which is longer in
+        Manual mode, e.g. '≈ 30 frames/s · 33.33 ms/frame') sits on its own line below, so
+        switching modes never pushes other controls around."""
+        widget = QWidget()
+        column = QVBoxLayout(widget)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(1)
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
+        row.addWidget(mode_combo)
+        row.addWidget(value_spin)
+        row.addStretch(1)
+        column.addLayout(row)
+        detail_label.setMinimumWidth(0)
+        column.addWidget(detail_label)
+        return widget
 
     def _build_rf_section(self) -> QGroupBox:
         box = _section("RF — profile, gain, HWAAS, PRF")
         form = QFormLayout(box)
         form.setLabelAlignment(Qt.AlignLeft)
+        form.setFieldGrowthPolicy(QFormLayout.FieldsStayAtSizeHint)
+        form.setHorizontalSpacing(10)
+        form.setVerticalSpacing(5)
 
         self.profile_combo = QComboBox()
         self.profile_combo.addItems([
@@ -278,25 +351,35 @@ class SettingsTab(QWidget):
 
     def _build_advanced_section(self) -> QGroupBox:
         box = _section("Advanced")
-        form = QFormLayout(box)
-        form.setLabelAlignment(Qt.AlignLeft)
+        grid = QGridLayout(box)
+        grid.setHorizontalSpacing(16)
+        grid.setVerticalSpacing(4)
 
         self.enable_tx_check = QCheckBox("Enable transmitter")
         self.enable_tx_check.stateChanged.connect(self._on_any_change)
-        form.addRow("", self.enable_tx_check)
-
-        self.enable_loopback_check = QCheckBox("Enable loopback")
-        self.enable_loopback_check.stateChanged.connect(self._on_any_change)
-        form.addRow("", self.enable_loopback_check)
-
+        self.loopback_reference_check = QCheckBox("Loopback phase reference (recommended)")
+        self.loopback_reference_check.setToolTip(
+            "Adds a 1-point on-chip loopback subsweep to every frame and uses it to keep the "
+            "background subtraction phase-stable (Acconeer's close-range method). "
+            "It does not replace the wall measurement."
+        )
+        self.loopback_reference_check.stateChanged.connect(self._on_any_change)
+        self.distance_filter_check = QCheckBox("Distance filter (Acconeer, recommended)")
+        self.distance_filter_check.setToolTip(
+            "Acconeer's matched low-pass filter along distance, applied to every frame before "
+            "amplitudes and features are computed. Smoother, more repeatable peaks."
+        )
+        self.distance_filter_check.stateChanged.connect(self._on_any_change)
         self.phase_enhancement_check = QCheckBox("Phase enhancement")
         self.phase_enhancement_check.stateChanged.connect(self._on_any_change)
-        form.addRow("", self.phase_enhancement_check)
-
         self.iq_imbalance_check = QCheckBox("IQ imbalance compensation")
         self.iq_imbalance_check.stateChanged.connect(self._on_any_change)
-        form.addRow("", self.iq_imbalance_check)
 
+        grid.addWidget(self.enable_tx_check, 0, 0)
+        grid.addWidget(self.loopback_reference_check, 0, 1)
+        grid.addWidget(self.phase_enhancement_check, 1, 0)
+        grid.addWidget(self.iq_imbalance_check, 1, 1)
+        grid.addWidget(self.distance_filter_check, 2, 0)
         return box
 
     def _build_explanations_section(self) -> QGroupBox:
@@ -408,9 +491,18 @@ class SettingsTab(QWidget):
                         "The transmitter needs to be enabled for normal radar measurements."
                     ),
                     (
-                        "Enable loopback",
-                        "Enables an internal signal path that routes the transmitted signal back toward the receiver for testing and diagnostics. "
-                        "It is generally not needed for normal wall-moisture measurements."
+                        "Loopback phase reference",
+                        "Adds one extra on-chip (loopback) measurement point in front of every sweep. Its phase tracks the "
+                        "sensor's own phase jitter, which is used to rotate the stored background before it is subtracted, "
+                        "so the leakage cancels properly even across Stop/Start and recordings. The wall measurement itself "
+                        "is unchanged. (A plain 'Enable loopback' switch was removed: it turned the whole sweep into an "
+                        "on-chip measurement with no wall data.)"
+                    ),
+                    (
+                        "Distance filter",
+                        "Acconeer's matched filter along distance (first-order Butterworth, zero phase). It smooths "
+                        "each frame before amplitudes and features are computed, so peak positions and window "
+                        "features are steadier from one placement to the next. Leave it on when recording training data."
                     ),
                     (
                         "Phase enhancement",
@@ -461,11 +553,18 @@ class SettingsTab(QWidget):
 
         if not self.settings.value("settings_saved", False, type=bool):
             return
+        self.defaults_upgraded = False
+        if self.settings.value("settings_version", 1, type=int) < SETTINGS_VERSION:
+            # Saved before the close-range corrections: keep only the IP address and use
+            # the new project defaults (gain 5, 10 sweeps/frame, loopback reference, ...).
+            p.ip_address = self.settings.value("ip_address", p.ip_address, type=str)
+            self.defaults_upgraded = True
+            return
 
         p.ip_address = self.settings.value("ip_address", p.ip_address, type=str)
         p.start_point = self.settings.value("start_point", p.start_point, type=int)
         p.num_points = self.settings.value("num_points", p.num_points, type=int)
-        p.step_length = self.settings.value("step_length", p.step_length, type=int)
+        p.step_length = snap_step_length(self.settings.value("step_length", p.step_length, type=int))
         p.sweeps_per_frame = self.settings.value("sweeps_per_frame", p.sweeps_per_frame, type=int)
 
         frame_mode = self.settings.value("frame_rate_mode", "Automatic", type=str)
@@ -495,9 +594,10 @@ class SettingsTab(QWidget):
         )
         p.prf = self.settings.value("prf", p.prf, type=str)
         p.enable_tx = self.settings.value("enable_tx", p.enable_tx, type=bool)
-        p.enable_loopback = self.settings.value(
-            "enable_loopback", p.enable_loopback, type=bool
+        p.use_loopback_reference = self.settings.value(
+            "use_loopback_reference", p.use_loopback_reference, type=bool
         )
+        p.distance_filter = self.settings.value("distance_filter", p.distance_filter, type=bool)
         p.phase_enhancement = self.settings.value(
             "phase_enhancement", p.phase_enhancement, type=bool
         )
@@ -513,6 +613,7 @@ class SettingsTab(QWidget):
 
         values = {
             "settings_saved": True,
+            "settings_version": SETTINGS_VERSION,
             "ip_address": p.ip_address,
             "start_point": p.start_point,
             "num_points": p.num_points,
@@ -531,7 +632,8 @@ class SettingsTab(QWidget):
             "receiver_gain": p.receiver_gain,
             "prf": p.prf,
             "enable_tx": p.enable_tx,
-            "enable_loopback": p.enable_loopback,
+            "use_loopback_reference": p.use_loopback_reference,
+            "distance_filter": p.distance_filter,
             "phase_enhancement": p.phase_enhancement,
             "iq_imbalance_compensation": p.iq_imbalance_compensation,
         }
@@ -560,7 +662,8 @@ class SettingsTab(QWidget):
             self.continuous_sweep_check, self.double_buffering_check,
             self.inter_frame_idle_combo, self.inter_sweep_idle_combo, self.profile_combo,
             self.hwaas_spin, self.receiver_gain_spin, self.prf_combo, self.enable_tx_check,
-            self.enable_loopback_check, self.phase_enhancement_check, self.iq_imbalance_check,
+            self.loopback_reference_check, self.phase_enhancement_check, self.iq_imbalance_check,
+            self.distance_filter_check,
         ]
         for w in widgets:
             w.blockSignals(True)
@@ -597,7 +700,8 @@ class SettingsTab(QWidget):
         self.receiver_gain_spin.setValue(p.receiver_gain)
         self.prf_combo.setCurrentText(p.prf)
         self.enable_tx_check.setChecked(p.enable_tx)
-        self.enable_loopback_check.setChecked(p.enable_loopback)
+        self.loopback_reference_check.setChecked(p.use_loopback_reference)
+        self.distance_filter_check.setChecked(p.distance_filter)
         self.phase_enhancement_check.setChecked(p.phase_enhancement)
         self.iq_imbalance_check.setChecked(p.iq_imbalance_compensation)
 
@@ -605,6 +709,7 @@ class SettingsTab(QWidget):
             w.blockSignals(False)
 
         self._update_rate_controls()
+        self._update_rate_descriptions()
         self._update_range_summary()
 
     def _on_frame_rate_mode_changed(self, *_):
@@ -615,12 +720,27 @@ class SettingsTab(QWidget):
         self._update_rate_controls()
         self._on_any_change()
 
+    def _update_rate_descriptions(self, *_):
+        frame_hz = self.frame_rate_spin.value()
+        sweep_hz = self.sweep_rate_spin.value()
+        frame_ms = 1000.0 / frame_hz if frame_hz > 0 else 0.0
+        sweep_ms = 1000.0 / sweep_hz if sweep_hz > 0 else 0.0
+        if self.frame_rate_mode_combo.currentText() == "Automatic":
+            self.frame_rate_detail.setText("Sensor-selected rate")
+        else:
+            self.frame_rate_detail.setText(f"≈ {frame_hz:g} frames/s · {frame_ms:.2f} ms/frame")
+        if self.sweep_rate_mode_combo.currentText() == "Automatic":
+            self.sweep_rate_detail.setText("Sensor-selected rate")
+        else:
+            self.sweep_rate_detail.setText(f"≈ {sweep_hz:g} sweeps/s · {sweep_ms:.3f} ms/sweep")
+
     def _update_rate_controls(self):
         frame_manual = self.frame_rate_mode_combo.currentText() == "Manual"
         sweep_manual = self.sweep_rate_mode_combo.currentText() == "Manual"
 
         self.frame_rate_spin.setEnabled(frame_manual)
         self.sweep_rate_spin.setEnabled(sweep_manual)
+        self._update_rate_descriptions()
 
         if not frame_manual:
             self.frame_rate_spin.setToolTip(
@@ -666,7 +786,8 @@ class SettingsTab(QWidget):
         p.receiver_gain = self.receiver_gain_spin.value()
         p.prf = self.prf_combo.currentText()
         p.enable_tx = self.enable_tx_check.isChecked()
-        p.enable_loopback = self.enable_loopback_check.isChecked()
+        p.use_loopback_reference = self.loopback_reference_check.isChecked()
+        p.distance_filter = self.distance_filter_check.isChecked()
         p.phase_enhancement = self.phase_enhancement_check.isChecked()
         p.iq_imbalance_compensation = self.iq_imbalance_check.isChecked()
 
@@ -706,6 +827,7 @@ class SettingsTab(QWidget):
         self.connect_btn.setEnabled(True)
         self.connect_btn.setText("Disconnect" if connected else "Connect")
         self.status_label.setText(message)
+        self.status_label.setToolTip(message)
         self.status_label.setProperty("connected", connected)
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)

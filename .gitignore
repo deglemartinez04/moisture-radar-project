@@ -7,3 +7,11 @@ __pycache__/
 
 # Local smoke-test output, not real project data
 extracted_from_h5.csv
+
+# Tool caches and regenerated reports
+.ruff_cache/
+ml/results/
+
+# ...but keep the real recordings versioned (small); synthetic ones stay ignored
+!data/recordings/*.h5
+!data/legacy/*.h5

@@ -1,0 +1,44 @@
+{
+  "trained_at": "2026-10-13T19:23:43",
+  "dataset": "C:\\Users\\marti\\OneDrive\\Documents\\MoistureRadarProject\\simulation_new_cutoffs\\dataset.csv",
+  "features": [
+    "g1_amplitude_mean",
+    "g1_amplitude_std",
+    "g1_phase_std_rad",
+    "g2_amplitude_mean",
+    "g2_amplitude_std",
+    "g2_phase_std_rad",
+    "g2_g1_amplitude_ratio",
+    "g2_g1_phase_diff_rad",
+    "gate_separation_m",
+    "attenuation_slope",
+    "total_energy",
+    "noise_floor",
+    "frame_to_frame_variability",
+    "signal_quality_score"
+  ],
+  "labels": [
+    "Damp",
+    "Dry",
+    "Saturated"
+  ],
+  "window_frames": 10,
+  "sensor_config": {
+    "start_point": 24,
+    "num_points": 40,
+    "step_length": 2,
+    "profile": "PROFILE_1",
+    "hwaas": 32,
+    "receiver_gain": 16,
+    "prf": "PRF_15_6_MHz",
+    "sweeps_per_frame": 1
+  },
+  "n_windows": 1800,
+  "n_recordings": 30,
+  "cv_window_accuracy": 0.7989,
+  "cv_window_accuracy_95ci": [
+    0.6644,
+    0.9322
+  ],
+  "cv_recording_accuracy": 0.8
+}
