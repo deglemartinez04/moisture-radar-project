@@ -1,0 +1,167 @@
+LR (V14 AppV10 model) vs RF (this repo) on the V14 feature tables
+Same 28 features, same folds. Small data (23-60 wetness rows): treat differences as tentative.
+Labels were partly fixed by hand (see App/ml/README_ML.md in the V14 zips).
+
+=== Dataset A (all useful data) (236 rows pass quality) ===
+
+  --- STUD: 126 rows, 34 blocks; No stud=26, Stud=100
+  (check) LR with C chosen on the test folds, as in the V14 report: balanced acc 0.93
+
+  grouped 5-fold  (balanced accuracy / accuracy)
+    LR (theirs)  0.88 / 0.87
+    RF (ours)    0.76 / 0.86  [5 seeds 0.75-0.77]
+    RF balanced  0.76 / 0.84  [5 seeds 0.76-0.76]
+    only LR right: 9, only RF-balanced right: 5  (McNemar p=0.42)
+
+  leave-one-standoff-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.92 / 0.89
+    RF (ours)    0.77 / 0.88  [5 seeds 0.77-0.77]
+    RF balanced  0.77 / 0.87  [5 seeds 0.77-0.77]
+    only LR right: 11, only RF-balanced right: 8  (McNemar p=0.65)
+      unseen 12.0: LR 0.50, RF-b 0.50  (n=6)
+      unseen 20.0: LR 1.00, RF-b 0.50  (n=6)
+      unseen 30.0: LR 0.80, RF-b 0.55  (n=20)
+      unseen 40.0: LR 0.90, RF-b 0.95  (n=20)
+      unseen 50.0: LR 0.93, RF-b 0.98  (n=56)
+      unseen 60.0: LR 0.94, RF-b 1.00  (n=18)
+
+  leave-one-day-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.93 / 0.89
+    RF (ours)    0.67 / 0.82  [5 seeds 0.66-0.68]
+    RF balanced  0.78 / 0.87  [5 seeds 0.77-0.79]
+    only LR right: 10, only RF-balanced right: 7  (McNemar p=0.63)
+      unseen 2026-10-22: LR 0.92, RF-b 0.75  (n=36)
+      unseen 2026-10-27: LR 0.83, RF-b 0.87  (n=53)
+      unseen 2026-10-29: LR 0.88, RF-b 0.94  (n=16)
+      unseen 2026-10-31: LR 1.00, RF-b 1.00  (n=21)
+
+  --- WETNESS (Dry/Damp/Saturated): 60 rows, 16 blocks; Dry=15, Damp=18, Saturated=27
+  (check) LR with C chosen on the test folds, as in the V14 report: balanced acc 0.67
+
+  grouped 5-fold  (balanced accuracy / accuracy)
+    LR (theirs)  0.63 / 0.60
+    RF (ours)    0.72 / 0.72  [5 seeds 0.70-0.74]
+    RF balanced  0.71 / 0.69  [5 seeds 0.68-0.73]
+    only LR right: 4, only RF-balanced right: 11  (McNemar p=0.12)
+    LR confusion (rows=true, cols=pred; Dry/Damp/Saturated): [[13, 1, 1], [4, 10, 4], [9, 5, 13]]
+    RF-b confusion (rows=true, cols=pred; Dry/Damp/Saturated): [[13, 2, 0], [2, 12, 4], [1, 8, 18]]
+
+  leave-one-standoff-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.75 / 0.73
+    RF (ours)    0.72 / 0.71  [5 seeds 0.70-0.75]
+    RF balanced  0.72 / 0.70  [5 seeds 0.72-0.72]
+    only LR right: 3, only RF-balanced right: 1  (McNemar p=0.62)
+      unseen 40.0: LR 0.87, RF-b 0.80  (n=15)
+      unseen 50.0: LR 0.59, RF-b 0.59  (n=32)
+      unseen 60.0: LR 0.92, RF-b 0.85  (n=13)
+
+  leave-one-day-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.54 / 0.48
+    RF (ours)    0.44 / 0.40  [5 seeds 0.42-0.44]
+    RF balanced  0.51 / 0.45  [5 seeds 0.50-0.52]
+    only LR right: 4, only RF-balanced right: 2  (McNemar p=0.69)
+      unseen 2026-10-22: LR 0.89, RF-b 0.89  (n=9)
+      unseen 2026-10-27: LR 0.33, RF-b 0.27  (n=33)
+      unseen 2026-10-29: LR 0.67, RF-b 0.58  (n=12)
+      unseen 2026-10-31: LR 0.33, RF-b 0.50  (n=6)
+
+  --- WET vs DRY: 60 rows, 16 blocks; Dry=15, Wet=45
+  (check) LR with C chosen on the test folds, as in the V14 report: balanced acc 0.78
+
+  grouped 5-fold  (balanced accuracy / accuracy)
+    LR (theirs)  0.72 / 0.72
+    RF (ours)    0.86 / 0.89  [5 seeds 0.86-0.87]
+    RF balanced  0.88 / 0.88  [5 seeds 0.87-0.91]
+    only LR right: 5, only RF-balanced right: 14  (McNemar p=0.06)
+
+  leave-one-standoff-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.83 / 0.78
+    RF (ours)    0.85 / 0.87  [5 seeds 0.84-0.86]
+    RF balanced  0.90 / 0.90  [5 seeds 0.88-0.91]
+    only LR right: 2, only RF-balanced right: 8  (McNemar p=0.11)
+      unseen 40.0: LR 0.93, RF-b 0.87  (n=15)
+      unseen 50.0: LR 0.72, RF-b 0.88  (n=32)
+      unseen 60.0: LR 0.77, RF-b 0.92  (n=13)
+
+  leave-one-day-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.78 / 0.73
+    RF (ours)    0.89 / 0.93  [5 seeds 0.89-0.89]
+    RF balanced  0.94 / 0.94  [5 seeds 0.93-0.94]
+    only LR right: 1, only RF-balanced right: 13  (McNemar p=0.00)
+      unseen 2026-10-22: LR 0.89, RF-b 1.00  (n=9)
+      unseen 2026-10-27: LR 0.67, RF-b 0.94  (n=33)
+      unseen 2026-10-29: LR 0.75, RF-b 0.92  (n=12)
+      unseen 2026-10-31: LR 0.83, RF-b 0.83  (n=6)
+
+=== Dataset B (old dry + new wet) (160 rows pass quality) ===
+
+  --- STUD: 89 rows, 26 blocks; No stud=26, Stud=63
+  (check) LR with C chosen on the test folds, as in the V14 report: balanced acc 0.95
+
+  grouped 5-fold  (balanced accuracy / accuracy)
+    LR (theirs)  0.95 / 0.93
+    RF (ours)    0.74 / 0.74  [5 seeds 0.74-0.74]
+    RF balanced  0.77 / 0.76  [5 seeds 0.76-0.78]
+    only LR right: 18, only RF-balanced right: 2  (McNemar p=0.00)
+
+  leave-one-standoff-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.94 / 0.92
+    RF (ours)    0.73 / 0.72  [5 seeds 0.71-0.74]
+    RF balanced  0.69 / 0.71  [5 seeds 0.68-0.70]
+    only LR right: 24, only RF-balanced right: 6  (McNemar p=0.00)
+      unseen 12.0: LR 0.50, RF-b 0.50  (n=6)
+      unseen 20.0: LR 1.00, RF-b 0.67  (n=6)
+      unseen 30.0: LR 1.00, RF-b 0.60  (n=10)
+      unseen 40.0: LR 1.00, RF-b 1.00  (n=10)
+      unseen 50.0: LR 0.94, RF-b 0.66  (n=47)
+      unseen 60.0: LR 0.90, RF-b 1.00  (n=10)
+
+  leave-one-day-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.86 / 0.80
+    RF (ours)    0.67 / 0.69  [5 seeds 0.66-0.67]
+    RF balanced  0.69 / 0.70  [5 seeds 0.66-0.72]
+    only LR right: 11, only RF-balanced right: 5  (McNemar p=0.21)
+      unseen 2026-10-22: LR 0.92, RF-b 0.78  (n=36)
+      unseen 2026-10-27: LR 0.94, RF-b 0.94  (n=16)
+      unseen 2026-10-29: LR 0.88, RF-b 0.94  (n=16)
+      unseen 2026-10-31: LR 0.43, RF-b 0.33  (n=21)
+
+  --- WETNESS (Dry/Damp/Saturated): 23 rows, 6 blocks; Dry=5, Damp=5, Saturated=13
+  (check) LR with C chosen on the test folds, as in the V14 report: balanced acc 0.68
+
+  grouped 5-fold  (balanced accuracy / accuracy)
+    LR (theirs)  0.62 / 0.70
+    RF (ours)    0.54 / 0.62  [5 seeds 0.43-0.66]
+    RF balanced  0.68 / 0.74  [5 seeds 0.68-0.68]
+    only LR right: 0, only RF-balanced right: 1  (McNemar p=1.00)
+    LR confusion (rows=true, cols=pred; Dry/Damp/Saturated): [[4, 1, 0], [4, 1, 0], [1, 1, 11]]
+    RF-b confusion (rows=true, cols=pred; Dry/Damp/Saturated): [[4, 1, 0], [3, 2, 0], [1, 1, 11]]
+
+  leave-one-day-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.68 / 0.74
+    RF (ours)    0.55 / 0.63  [5 seeds 0.48-0.59]
+    RF balanced  0.68 / 0.74  [5 seeds 0.68-0.68]
+    only LR right: 1, only RF-balanced right: 1  (McNemar p=1.00)
+      unseen 2026-10-22: LR 1.00, RF-b 1.00  (n=3)
+      unseen 2026-10-27: LR 1.00, RF-b 0.50  (n=2)
+      unseen 2026-10-29: LR 0.83, RF-b 0.83  (n=12)
+      unseen 2026-10-31: LR 0.33, RF-b 0.50  (n=6)
+
+  --- WET vs DRY: 23 rows, 6 blocks; Dry=5, Wet=18
+  (check) LR with C chosen on the test folds, as in the V14 report: balanced acc 0.86
+
+  grouped 5-fold  (balanced accuracy / accuracy)
+    LR (theirs)  0.86 / 0.78
+    RF (ours)    0.64 / 0.78  [5 seeds 0.64-0.64]
+    RF balanced  0.86 / 0.78  [5 seeds 0.86-0.86]
+    only LR right: 1, only RF-balanced right: 1  (McNemar p=1.00)
+
+  leave-one-day-out  (balanced accuracy / accuracy)
+    LR (theirs)  0.72 / 0.57
+    RF (ours)    0.56 / 0.65  [5 seeds 0.56-0.56]
+    RF balanced  0.84 / 0.76  [5 seeds 0.83-0.86]
+    only LR right: 0, only RF-balanced right: 5  (McNemar p=0.06)
+      unseen 2026-10-22: LR 1.00, RF-b 1.00  (n=3)
+      unseen 2026-10-27: LR 1.00, RF-b 1.00  (n=2)
+      unseen 2026-10-29: LR 0.50, RF-b 0.83  (n=12)
+      unseen 2026-10-31: LR 0.33, RF-b 0.50  (n=6)
