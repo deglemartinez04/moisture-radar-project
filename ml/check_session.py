@@ -1,8 +1,8 @@
 """Check one or more data_log.csv files against docs/recording_protocol.md.
 
 Reports problems that would limit the Dry/Damp/Saturated model: missing pin-meter readings, labels that
-disagree with the pin meter, wrong standoff, a day without all three classes, too few boards or days,
-and wet boards logged with a single label for over an hour while drying.
+disagree with the pin meter, wrong standoff, a day without all three classes, too few studs or days,
+and wet studs logged with a single label for over an hour while drying.
 
 Usage:  python ml/check_session.py data/recordings/2026-11-10/data_log.csv [more.csv ...]
 """
@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "ml"))
 from labels import LEVELS, level_for_mc  # noqa: E402
 
 STANDOFF_MM = 50.0
-TARGET_PER_CLASS, TARGET_BOARDS, TARGET_DAYS = 30, 3, 3
+TARGET_PER_CLASS, TARGET_STUDS, TARGET_DAYS = 30, 3, 3
 BOUNDARY_PT = 1.0
 CUTOFFS = (12.0, 20.0)
 
@@ -71,13 +71,13 @@ def check(d):
         if missing:
             problems.append(f"{day}: no {', '.join(missing)} recordings (record all three classes every day).")
 
-    n_board = w.groupby("moisture_level")["sample_id"].nunique()
+    n_stud = w.groupby("moisture_level")["sample_id"].nunique()
     n_day = w.groupby("moisture_level")["day"].nunique()
     n_rec = w.groupby("moisture_level").size()
     for c in LEVELS:
-        r, b, dy = int(n_rec.get(c, 0)), int(n_board.get(c, 0)), int(n_day.get(c, 0))
+        r, b, dy = int(n_rec.get(c, 0)), int(n_stud.get(c, 0)), int(n_day.get(c, 0))
         short = [t for t, ok in ((f"recordings {r}/{TARGET_PER_CLASS}", r >= TARGET_PER_CLASS),
-                                 (f"boards {b}/{TARGET_BOARDS}", b >= TARGET_BOARDS),
+                                 (f"studs {b}/{TARGET_STUDS}", b >= TARGET_STUDS),
                                  (f"days {dy}/{TARGET_DAYS}", dy >= TARGET_DAYS)) if not ok]
         if short:
             problems.append(f"{c}: below target ({', '.join(short)}).")
@@ -89,7 +89,7 @@ def check(d):
                 has_ref = pd.to_numeric(g["reference_moisture_pct"], errors="coerce").notna().all()
                 if not has_ref:
                     problems.append(f"{sid} on {day}: one label ({g['moisture_level'].iloc[0]}) over {span.max() - span.min():g} min "
-                                    f"with no pin readings; a wet board dries in that time, so the label is probably wrong later on.")
+                                    f"with no pin readings; a wet stud dries in that time, so the label is probably wrong later on.")
     return problems, notes
 
 
