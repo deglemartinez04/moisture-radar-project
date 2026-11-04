@@ -1,0 +1,103 @@
+More classifiers for Dry/Damp/Saturated (same data and folds as compare_ordinal.py)
+Chance balanced accuracy is 0.33. Hyperparameters fixed, not tuned. Small data: a few points is noise.
+
+=== A) Dataset A wetness: 60 rows, 28 features ===
+
+  grouped 5-fold
+    LR (baseline)  bal.acc 0.67  acc 0.63  mean step error 0.50  Dry<->Saturated mistakes 8
+    SVM linear     bal.acc 0.82  acc 0.80  mean step error 0.22  Dry<->Saturated mistakes 1
+    SVM RBF        bal.acc 0.83  acc 0.83  mean step error 0.18  Dry<->Saturated mistakes 1
+    LDA            bal.acc 0.73  acc 0.70  mean step error 0.45  Dry<->Saturated mistakes 9
+    PCA+LDA        bal.acc 0.50  acc 0.48  mean step error 0.82  Dry<->Saturated mistakes 18
+    PLS-DA         bal.acc 0.49  acc 0.43  mean step error 0.77  Dry<->Saturated mistakes 12
+    kNN            bal.acc 0.58  acc 0.57  mean step error 0.48  Dry<->Saturated mistakes 3
+    GP             bal.acc 0.66  acc 0.65  mean step error 0.45  Dry<->Saturated mistakes 6
+    Extra-Trees    bal.acc 0.74  acc 0.72  mean step error 0.30  Dry<->Saturated mistakes 1
+    Grad-Boost     bal.acc 0.61  acc 0.60  mean step error 0.42  Dry<->Saturated mistakes 1
+    Naive Bayes    bal.acc 0.58  acc 0.52  mean step error 0.50  Dry<->Saturated mistakes 1
+    SVM linear     better on 11, worse on 1 rows vs baseline (McNemar p=0.01; rows are not independent)
+    SVM RBF        better on 14, worse on 2 rows vs baseline (McNemar p=0.00; rows are not independent)
+    LDA            better on 8, worse on 4 rows vs baseline (McNemar p=0.39; rows are not independent)
+    PCA+LDA        better on 4, worse on 13 rows vs baseline (McNemar p=0.05; rows are not independent)
+    PLS-DA         better on 1, worse on 13 rows vs baseline (McNemar p=0.00; rows are not independent)
+    kNN            better on 9, worse on 13 rows vs baseline (McNemar p=0.52; rows are not independent)
+    GP             better on 6, worse on 5 rows vs baseline (McNemar p=1.00; rows are not independent)
+    Extra-Trees    better on 10, worse on 5 rows vs baseline (McNemar p=0.30; rows are not independent)
+    Grad-Boost     better on 10, worse on 12 rows vs baseline (McNemar p=0.83; rows are not independent)
+    Naive Bayes    better on 4, worse on 11 rows vs baseline (McNemar p=0.12; rows are not independent)
+
+  leave-one-standoff-out
+    LR (baseline)  bal.acc 0.74  acc 0.72  mean step error 0.33  Dry<->Saturated mistakes 3
+    SVM linear     bal.acc 0.72  acc 0.70  mean step error 0.40  Dry<->Saturated mistakes 6
+    SVM RBF        bal.acc 0.69  acc 0.65  mean step error 0.37  Dry<->Saturated mistakes 1
+    LDA            bal.acc 0.72  acc 0.68  mean step error 0.37  Dry<->Saturated mistakes 3
+    PCA+LDA        bal.acc 0.52  acc 0.55  mean step error 0.67  Dry<->Saturated mistakes 13
+    PLS-DA         bal.acc 0.66  acc 0.60  mean step error 0.50  Dry<->Saturated mistakes 6
+    kNN            bal.acc 0.64  acc 0.62  mean step error 0.42  Dry<->Saturated mistakes 2
+    GP             bal.acc 0.66  acc 0.63  mean step error 0.42  Dry<->Saturated mistakes 3
+    Extra-Trees    bal.acc 0.68  acc 0.65  mean step error 0.37  Dry<->Saturated mistakes 1
+    Grad-Boost     bal.acc 0.65  acc 0.62  mean step error 0.40  Dry<->Saturated mistakes 1
+    Naive Bayes    bal.acc 0.66  acc 0.60  mean step error 0.42  Dry<->Saturated mistakes 1
+    SVM linear     better on 1, worse on 2 rows vs baseline (McNemar p=1.00; rows are not independent)
+    SVM RBF        better on 2, worse on 6 rows vs baseline (McNemar p=0.29; rows are not independent)
+    LDA            better on 1, worse on 3 rows vs baseline (McNemar p=0.62; rows are not independent)
+    PCA+LDA        better on 3, worse on 13 rows vs baseline (McNemar p=0.02; rows are not independent)
+    PLS-DA         better on 1, worse on 8 rows vs baseline (McNemar p=0.04; rows are not independent)
+    kNN            better on 1, worse on 7 rows vs baseline (McNemar p=0.07; rows are not independent)
+    GP             better on 1, worse on 6 rows vs baseline (McNemar p=0.12; rows are not independent)
+    Extra-Trees    better on 1, worse on 5 rows vs baseline (McNemar p=0.22; rows are not independent)
+    Grad-Boost     better on 1, worse on 7 rows vs baseline (McNemar p=0.07; rows are not independent)
+    Naive Bayes    better on 2, worse on 9 rows vs baseline (McNemar p=0.07; rows are not independent)
+
+  leave-one-day-out
+    LR (baseline)  bal.acc 0.60  acc 0.53  mean step error 0.60  Dry<->Saturated mistakes 8
+    SVM linear     bal.acc 0.56  acc 0.50  mean step error 0.60  Dry<->Saturated mistakes 6
+    SVM RBF        bal.acc 0.58  acc 0.53  mean step error 0.52  Dry<->Saturated mistakes 3
+    LDA            bal.acc 0.53  acc 0.47  mean step error 0.70  Dry<->Saturated mistakes 10
+    PCA+LDA        bal.acc 0.34  acc 0.32  mean step error 1.02  Dry<->Saturated mistakes 20
+    PLS-DA         bal.acc 0.57  acc 0.50  mean step error 0.63  Dry<->Saturated mistakes 8
+    kNN            bal.acc 0.37  acc 0.30  mean step error 0.83  Dry<->Saturated mistakes 8
+    GP             bal.acc 0.35  acc 0.35  mean step error 0.85  Dry<->Saturated mistakes 12
+    Extra-Trees    bal.acc 0.54  acc 0.48  mean step error 0.53  Dry<->Saturated mistakes 1
+    Grad-Boost     bal.acc 0.47  acc 0.42  mean step error 0.60  Dry<->Saturated mistakes 1
+    Naive Bayes    bal.acc 0.48  acc 0.40  mean step error 0.62  Dry<->Saturated mistakes 1
+    SVM linear     better on 1, worse on 3 rows vs baseline (McNemar p=0.62; rows are not independent)
+    SVM RBF        better on 4, worse on 4 rows vs baseline (McNemar p=1.00; rows are not independent)
+    LDA            better on 1, worse on 5 rows vs baseline (McNemar p=0.22; rows are not independent)
+    PCA+LDA        better on 0, worse on 13 rows vs baseline (McNemar p=0.00; rows are not independent)
+    PLS-DA         better on 2, worse on 4 rows vs baseline (McNemar p=0.69; rows are not independent)
+    kNN            better on 1, worse on 15 rows vs baseline (McNemar p=0.00; rows are not independent)
+    GP             better on 3, worse on 14 rows vs baseline (McNemar p=0.01; rows are not independent)
+    Extra-Trees    better on 2, worse on 5 rows vs baseline (McNemar p=0.45; rows are not independent)
+    Grad-Boost     better on 2, worse on 9 rows vs baseline (McNemar p=0.07; rows are not independent)
+    Naive Bayes    better on 1, worse on 9 rows vs baseline (McNemar p=0.02; rows are not independent)
+
+=== B) 10-22 + 10-29 + 10-31 subset: 36 rows, 26 shape features, held-out board + standoffs ===
+    LR (baseline)  bal.acc 0.67  acc 0.75  mean step error 0.33  Dry<->Saturated mistakes 3
+    SVM linear     bal.acc 0.67  acc 0.75  mean step error 0.33  Dry<->Saturated mistakes 3
+    SVM RBF        bal.acc 0.68  acc 0.75  mean step error 0.31  Dry<->Saturated mistakes 2
+    LDA            bal.acc 0.69  acc 0.78  mean step error 0.25  Dry<->Saturated mistakes 1
+    PCA+LDA        bal.acc 0.69  acc 0.78  mean step error 0.25  Dry<->Saturated mistakes 1
+    PLS-DA         bal.acc 0.72  acc 0.75  mean step error 0.31  Dry<->Saturated mistakes 2
+    kNN            bal.acc 0.53  acc 0.69  mean step error 0.39  Dry<->Saturated mistakes 3
+    GP             bal.acc 0.61  acc 0.72  mean step error 0.36  Dry<->Saturated mistakes 3
+    Extra-Trees    bal.acc 0.68  acc 0.75  mean step error 0.31  Dry<->Saturated mistakes 2
+    Grad-Boost     bal.acc 0.67  acc 0.75  mean step error 0.31  Dry<->Saturated mistakes 2
+    Naive Bayes    bal.acc 0.60  acc 0.69  mean step error 0.39  Dry<->Saturated mistakes 3
+    SVM linear     better on 0, worse on 0 rows vs baseline (McNemar p=1.00; rows are not independent)
+    SVM RBF        better on 1, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    LDA            better on 2, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    PCA+LDA        better on 2, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    PLS-DA         better on 1, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    kNN            better on 1, worse on 3 rows vs baseline (McNemar p=0.62; rows are not independent)
+    GP             better on 0, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    Extra-Trees    better on 1, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    Grad-Boost     better on 1, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    Naive Bayes    better on 1, worse on 3 rows vs baseline (McNemar p=0.62; rows are not independent)
+    Damp recall: LR (baseline) 0.40, SVM linear 0.40, SVM RBF 0.40, LDA 0.40, PCA+LDA 0.40, PLS-DA 0.60, kNN 0.00, GP 0.20, Extra-Trees 0.40, Grad-Boost 0.40, Naive Bayes 0.20
+
+=== Ranking by balanced accuracy per test ===
+  A grouped 5-fold: SVM RBF 0.83, SVM linear 0.82, Extra-Trees 0.74, LDA 0.73, LR (baseline) 0.67, GP 0.66, Grad-Boost 0.61, kNN 0.58, Naive Bayes 0.58, PCA+LDA 0.50, PLS-DA 0.49
+  A leave-one-standoff-out: LR (baseline) 0.74, SVM linear 0.72, LDA 0.72, SVM RBF 0.69, Extra-Trees 0.68, GP 0.66, PLS-DA 0.66, Naive Bayes 0.66, Grad-Boost 0.65, kNN 0.64, PCA+LDA 0.52
+  A leave-one-day-out: LR (baseline) 0.60, SVM RBF 0.58, PLS-DA 0.57, SVM linear 0.56, Extra-Trees 0.54, LDA 0.53, Naive Bayes 0.48, Grad-Boost 0.47, kNN 0.37, GP 0.35, PCA+LDA 0.34
+  B subset: PLS-DA 0.72, PCA+LDA 0.69, LDA 0.69, SVM RBF 0.68, Extra-Trees 0.68, SVM linear 0.67, LR (baseline) 0.67, Grad-Boost 0.67, GP 0.61, Naive Bayes 0.60, kNN 0.53

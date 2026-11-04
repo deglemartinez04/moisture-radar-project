@@ -1,0 +1,53 @@
+Ordinal and two-stage models vs plain logistic regression (Dry/Damp/Saturated)
+Chance balanced accuracy is 0.33. Small data: differences of a few points are noise.
+
+=== A) Dataset A wetness: 60 rows (Dry=15, Damp=18, Saturated=27), 28 features ===
+
+  grouped 5-fold
+    LR (baseline)  bal.acc 0.67  acc 0.63  mean step error 0.50  Dry<->Saturated mistakes 8
+    Ridge-ord      bal.acc 0.56  acc 0.52  mean step error 0.50  Dry<->Saturated mistakes 1
+    Frank-Hall     bal.acc 0.55  acc 0.55  mean step error 0.60  Dry<->Saturated mistakes 9
+    Two-stage LR   bal.acc 0.50  acc 0.48  mean step error 0.63  Dry<->Saturated mistakes 7
+    Two-stage RF   bal.acc 0.62  acc 0.62  mean step error 0.40  Dry<->Saturated mistakes 1
+    Ridge-ord      better on 3, worse on 10 rows vs baseline (McNemar p=0.09; rows are not independent)
+    Frank-Hall     better on 4, worse on 9 rows vs baseline (McNemar p=0.27; rows are not independent)
+    Two-stage LR   better on 2, worse on 11 rows vs baseline (McNemar p=0.02; rows are not independent)
+    Two-stage RF   better on 7, worse on 8 rows vs baseline (McNemar p=1.00; rows are not independent)
+
+  leave-one-standoff-out
+    LR (baseline)  bal.acc 0.74  acc 0.72  mean step error 0.33  Dry<->Saturated mistakes 3
+    Ridge-ord      bal.acc 0.52  acc 0.48  mean step error 0.70  Dry<->Saturated mistakes 11
+    Frank-Hall     bal.acc 0.64  acc 0.63  mean step error 0.47  Dry<->Saturated mistakes 6
+    Two-stage LR   bal.acc 0.70  acc 0.68  mean step error 0.40  Dry<->Saturated mistakes 5
+    Two-stage RF   bal.acc 0.66  acc 0.65  mean step error 0.38  Dry<->Saturated mistakes 2
+    Ridge-ord      better on 0, worse on 14 rows vs baseline (McNemar p=0.00; rows are not independent)
+    Frank-Hall     better on 1, worse on 6 rows vs baseline (McNemar p=0.12; rows are not independent)
+    Two-stage LR   better on 2, worse on 4 rows vs baseline (McNemar p=0.69; rows are not independent)
+    Two-stage RF   better on 2, worse on 6 rows vs baseline (McNemar p=0.29; rows are not independent)
+
+  leave-one-day-out
+    LR (baseline)  bal.acc 0.60  acc 0.53  mean step error 0.60  Dry<->Saturated mistakes 8
+    Ridge-ord      bal.acc 0.42  acc 0.38  mean step error 0.72  Dry<->Saturated mistakes 6
+    Frank-Hall     bal.acc 0.52  acc 0.47  mean step error 0.80  Dry<->Saturated mistakes 16
+    Two-stage LR   bal.acc 0.54  acc 0.48  mean step error 0.80  Dry<->Saturated mistakes 17
+    Two-stage RF   bal.acc 0.61  acc 0.55  mean step error 0.47  Dry<->Saturated mistakes 1
+    Ridge-ord      better on 3, worse on 12 rows vs baseline (McNemar p=0.04; rows are not independent)
+    Frank-Hall     better on 2, worse on 6 rows vs baseline (McNemar p=0.29; rows are not independent)
+    Two-stage LR   better on 1, worse on 4 rows vs baseline (McNemar p=0.38; rows are not independent)
+    Two-stage RF   better on 1, worse on 0 rows vs baseline (McNemar p=1.00; rows are not independent)
+      unseen 2026-10-22 (n=9): LR 1.00, Ridge-ord 0.67, Frank-Hall 1.00, Two-stage LR 0.89, Two-stage RF 1.00
+      unseen 2026-10-27 (n=33): LR 0.39, Ridge-ord 0.30, Frank-Hall 0.24, Two-stage LR 0.33, Two-stage RF 0.42
+      unseen 2026-10-29 (n=12): LR 0.67, Ridge-ord 0.42, Frank-Hall 0.67, Two-stage LR 0.67, Two-stage RF 0.67
+      unseen 2026-10-31 (n=6): LR 0.33, Ridge-ord 0.33, Frank-Hall 0.50, Two-stage LR 0.33, Two-stage RF 0.33
+
+=== B) 10-22 + 10-29 + 10-31 subset: 36 rows (Dry=18, Damp=5, Saturated=13), 26 shape features, held-out board + standoffs ===
+    LR (baseline)  bal.acc 0.67  acc 0.75  mean step error 0.33  Dry<->Saturated mistakes 3
+    Ridge-ord      bal.acc 0.60  acc 0.72  mean step error 0.42  Dry<->Saturated mistakes 5
+    Frank-Hall     bal.acc 0.67  acc 0.75  mean step error 0.33  Dry<->Saturated mistakes 3
+    Two-stage LR   bal.acc 0.69  acc 0.78  mean step error 0.25  Dry<->Saturated mistakes 1
+    Two-stage RF   bal.acc 0.63  acc 0.75  mean step error 0.31  Dry<->Saturated mistakes 2
+    Ridge-ord      better on 1, worse on 2 rows vs baseline (McNemar p=1.00; rows are not independent)
+    Frank-Hall     better on 1, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    Two-stage LR   better on 2, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    Two-stage RF   better on 1, worse on 1 rows vs baseline (McNemar p=1.00; rows are not independent)
+    Damp recall: LR 0.40, Ridge-ord 0.20, Frank-Hall 0.40, Two-stage LR 0.40, Two-stage RF 0.20  (n=5)

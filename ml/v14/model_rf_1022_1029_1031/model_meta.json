@@ -1,0 +1,39 @@
+{
+ "model": "RandomForestClassifier(n_estimators=300, min_samples_leaf=2, class_weight=balanced, random_state=0) after median imputation",
+ "features": [
+  "q10_re",
+  "q10_im",
+  "q15_re",
+  "q15_im",
+  "q20_re",
+  "q20_im",
+  "q25_re",
+  "q25_im",
+  "q30_re",
+  "q30_im",
+  "q35_re",
+  "q35_im",
+  "q40_re",
+  "q40_im",
+  "q45_re",
+  "q45_im",
+  "q50_re",
+  "q50_im",
+  "norm_rear_mag_db",
+  "norm_rear_phase_sin",
+  "norm_rear_phase_cos",
+  "rear_energy_ratio_db",
+  "rear_centroid_offset_m",
+  "rear_peak_offset_m",
+  "rear_phase_sin",
+  "rear_phase_cos"
+ ],
+ "classes": [
+  "Damp",
+  "Dry",
+  "Saturated"
+ ],
+ "n_rows": 36,
+ "trained_at": "2026-11-03T12:41:56",
+ "dataset": "10-22 dry + 10-29 + 10-31 (ml/train_subset.py)"
+}

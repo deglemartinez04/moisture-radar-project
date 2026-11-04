@@ -1,0 +1,24 @@
+Training subset: 2026-10-22, 2026-10-29, 2026-10-31, Wood + drywall, 26 features (without standoff-dependent features), logistic C=0.3
+Rows: Dry=18, Damp=5, Saturated=13  (+19 'Surface dry' rows, not trained on)
+Wet rows are all at 50 mm; dry rows span 12-60 mm.
+Dry blocks by standoff: 12mm=3, 20mm=3, 30mm=3, 40mm=3, 50mm=3, 60mm=3
+
+Fold S4: test = wet session S4 + dry at [12.0, 30.0, 50.0] mm  (n_test=21, train: Dry=9, Damp=3, Saturated=3)
+
+Fold S3: test = wet session S3 + dry at [20.0, 40.0, 60.0] mm  (n_test=15, train: Dry=9, Damp=2, Saturated=10)
+
+Held-out results (every row is tested once, on a board and standoff the model never saw)
+  LR: balanced accuracy 0.67, accuracy 0.75  (chance 0.33)
+    confusion rows=true, cols=pred (Dry/Damp/Saturated): [[14, 3, 1], [3, 2, 0], [2, 0, 11]]
+    Dry       recall 0.78 (n=18)
+    Damp      recall 0.40 (n=5)
+    Saturated recall 0.85 (n=13)
+  RF: balanced accuracy 0.67, accuracy 0.75  (chance 0.33)
+    confusion rows=true, cols=pred (Dry/Damp/Saturated): [[14, 4, 0], [3, 2, 0], [2, 0, 11]]
+    Dry       recall 0.78 (n=18)
+    Damp      recall 0.40 (n=5)
+    Saturated recall 0.85 (n=13)
+
+Final RF on the 'Surface dry' rows (surface dry, interior still wet): Dry=3, Damp=15, Saturated=1
+
+Saved C:\Users\marti\OneDrive\Documents\MoistureRadarProject\ml\v14\model_rf_1022_1029_1031\wetness_model.joblib -- RF fit on all 36 rows. Not copied into App/.
