@@ -1,1 +1,1 @@
-date,sample_id,step,wetting_method,wet_start_time,scan_time,time_since_wet_min,water_amount_ml,pin_before_pct,pin_after_pct,pin_mean_pct,class_label,boundary,room_temp_c,humidity_pct,notes
+date,sample_id,step,wetting_method,wet_start_time,scan_time,time_since_wet_min,water_amount_ml,wood_alone_scan_done,class_label,room_temp_c,humidity_pct,notes

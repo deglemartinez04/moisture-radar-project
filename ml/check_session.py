@@ -1,8 +1,9 @@
 """Check one or more data_log.csv files against docs/recording_protocol.md.
 
-Reports problems that would limit the Dry/Damp/Saturated model: missing pin-meter readings, labels that
-disagree with the pin meter, wrong standoff, a day without all three classes, too few studs or days,
-and wet studs logged with a single label for over an hour while drying.
+Reports problems that would limit the Dry/Damp/Saturated model: wet recordings without the wetting time,
+wrong standoff, a day without all three classes, too few studs or days, and wet studs logged with a single
+label for over an hour while drying. The team labels from the wetting procedure and time (no pin meter), so
+pin-meter checks only run on rows that happen to have a reference_moisture_pct value.
 
 Usage:  python ml/check_session.py data/recordings/2026-11-10/data_log.csv [more.csv ...]
 """
@@ -43,19 +44,29 @@ def check(d):
     if other:
         notes.append(f"{other} rows are other materials (open air, wood alone, ...): ignored below.")
 
-    ref = pd.to_numeric(w.get("reference_moisture_pct"), errors="coerce")
-    miss = int(ref.isna().sum())
-    if miss:
-        problems.append(f"{miss} of {len(w)} rows have no pin-meter reading (reference_moisture_pct is empty).")
+    notes.append("Labels come from the wetting procedure and time, not a measurement: report that with any accuracy figures.")
+    wet = w[w["moisture_level"] != "Dry"]
+    if "time_since_wet_min" in w:
+        tsw = pd.to_numeric(wet["time_since_wet_min"], errors="coerce")
+        if int(tsw.isna().sum()):
+            problems.append(f"{int(tsw.isna().sum())} Damp/Saturated rows have no time_since_wet_min.")
+        if "water_amount_ml" in w:
+            wml = pd.to_numeric(wet["water_amount_ml"], errors="coerce")
+            unlogged = int(((tsw == 0) & (wml == 0)).sum())
+            if unlogged:
+                problems.append(f"{unlogged} Damp/Saturated rows have time_since_wet_min = 0 and water_amount_ml = 0, "
+                                f"so the wetting was not recorded.")
 
+    ref = pd.to_numeric(w.get("reference_moisture_pct", pd.Series(float("nan"), index=w.index)), errors="coerce")
     have = w[ref.notna()].assign(ref=ref[ref.notna()])
-    bad = have[have["ref"].apply(level_for_mc) != have["moisture_level"]]
-    if len(bad):
-        problems.append(f"{len(bad)} rows have a label that disagrees with the pin meter (cutoffs {CUTOFFS[0]:g}/{CUTOFFS[1]:g}), "
-                        f"e.g. {bad['h5_file'].iloc[0]}: label {bad['moisture_level'].iloc[0]}, {bad['ref'].iloc[0]:g}%.")
-    near = have[have["ref"].apply(lambda v: min(abs(v - c) for c in CUTOFFS) <= BOUNDARY_PT)]
-    if len(near):
-        notes.append(f"{len(near)} rows are within {BOUNDARY_PT:g} point of a cutoff: mark them 'boundary', test data only.")
+    if len(have):
+        bad = have[have["ref"].apply(level_for_mc) != have["moisture_level"]]
+        if len(bad):
+            problems.append(f"{len(bad)} rows have a label that disagrees with their pin-meter value (cutoffs {CUTOFFS[0]:g}/{CUTOFFS[1]:g}), "
+                            f"e.g. {bad['h5_file'].iloc[0]}: label {bad['moisture_level'].iloc[0]}, {bad['ref'].iloc[0]:g}%.")
+        near = have[have["ref"].apply(lambda v: min(abs(v - c) for c in CUTOFFS) <= BOUNDARY_PT)]
+        if len(near):
+            notes.append(f"{len(near)} rows are within {BOUNDARY_PT:g} point of a cutoff: test data only.")
 
     dist = pd.to_numeric(w["measured_distance_mm"], errors="coerce")
     off = w[dist != STANDOFF_MM]
@@ -86,10 +97,11 @@ def check(d):
         for (sid, day), g in w.groupby(["sample_id", "day"]):
             span = pd.to_numeric(g["time_since_wet_min"], errors="coerce")
             if g["moisture_level"].nunique() == 1 and span.max() - span.min() >= 60 and g["moisture_level"].iloc[0] != "Dry":
-                has_ref = pd.to_numeric(g["reference_moisture_pct"], errors="coerce").notna().all()
+                has_ref = pd.to_numeric(g.get("reference_moisture_pct", pd.Series(float("nan"), index=g.index)), errors="coerce").notna().all()
                 if not has_ref:
-                    problems.append(f"{sid} on {day}: one label ({g['moisture_level'].iloc[0]}) over {span.max() - span.min():g} min "
-                                    f"with no pin readings; a wet stud dries in that time, so the label is probably wrong later on.")
+                    problems.append(f"{sid} on {day}: one label ({g['moisture_level'].iloc[0]}) over {span.max() - span.min():g} min; "
+                                    f"a wet stud dries in that time, so label each step from its own time_since_wet_min "
+                                    f"(and its wood-alone echo), not once per session.")
     return problems, notes
 
 
